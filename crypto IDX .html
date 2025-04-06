@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto IDX Bot - AI Powered</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; text-align: center; padding: 20px; }
+    .hidden { display: none; }
+    .btn { background: #28a745; padding: 10px 20px; color: white; border: none; cursor: pointer; margin-top: 10px; }
+    .signal { font-size: 1.8em; margin: 20px 0; }
+    #countdown { font-size: 1.2em; color: #f0ad4e; }
+    .history { margin-top: 20px; max-height: 150px; overflow-y: auto; background: #222; padding: 10px; border-radius: 8px; }
+    input[type="password"] { padding: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Crypto IDX AI Bot</h1>
+  
+  <div id="login">
+    <input type="password" id="accessCode" placeholder="Enter access code" />
+    <button class="btn" onclick="checkCode()">Unlock</button>
+  </div>
+  
+  <div id="botUI" class="hidden">
+    <div class="signal">
+      <p id="signalText">Signal: --</p>
+      <p id="confidenceText">Confidence: --%</p>
+      <p id="countdown">Expires in: --s</p>
+    </div>
+    <div>
+      <button class="btn" onclick="fetchSignal()">Refresh Signal</button>
+    </div>
+    <div class="history">
+      <h3>Signal History</h3>
+      <ul id="signalHistory"></ul>
+    </div>
+  </div>
+
+  <script>
+    const correctCode = "886622";
+    const apiUrl = "https://cryptoidx-ai-api.replit.app/signal";
+    const apiKey = "my-secret-key"; // Secure this key when going public
+    let countdownInterval;
+
+    function checkCode() {
+      const code = document.getElementById("accessCode").value;
+      if (code === correctCode) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("botUI").classList.remove("hidden");
+        fetchSignal();
+      } else {
+        alert("Incorrect code!");
+      }
+    }
+
+    async function fetchSignal() {
+      clearInterval(countdownInterval);
+      try {
+        const res = await fetch(apiUrl, {
+          headers: { "x-api-key": apiKey }
+        });
+        const data = await res.json();
+        const signal = data.signal;
+        const confidence = data.confidence;
+        const validFor = data.valid_for;
+
+        document.getElementById("signalText").textContent = "Signal: " + signal.toUpperCase();
+        document.getElementById("confidenceText").textContent = "Confidence: " + confidence + "%";
+        startCountdown(validFor);
+
+        const li = document.createElement("li");
+        li.textContent = new Date().toLocaleTimeString() + " - " + signal.toUpperCase() + " (" + confidence + "%)";
+        document.getElementById("signalHistory").prepend(li);
+      } catch (err) {
+        document.getElementById("signalText").textContent = "Signal: ERROR";
+        document.getElementById("confidenceText").textContent = "Confidence: --%";
+        document.getElementById("countdown").textContent = "Error fetching signal";
+      }
+    }
+
+    function startCountdown(seconds) {
+      let remaining = seconds;
+      document.getElementById("countdown").textContent = "Expires in: " + remaining + "s";
+      countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          document.getElementById("countdown").textContent = "Signal expired";
+        } else {
+          document.getElementById("countdown").textContent = "Expires in: " + remaining + "s";
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
